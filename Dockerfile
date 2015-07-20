@@ -1,27 +1,13 @@
-FROM ubuntu:trusty-20150427
+FROM fmorgner/cxx14_network:latest
 MAINTAINER docker.frontg8_server@estada.ch
 
-RUN echo 'APT::Install-Recommends 0;' >> /etc/apt/apt.conf.d/01norecommends \
-  && echo 'APT::Install-Suggests 0;' >> /etc/apt/apt.conf.d/01norecommends \
-  && apt-get update \
-  && apt-get install -y git ca-certificates python3-pip python3-openssl \
-  && apt-get install -y libprotobuf-dev protobuf-compiler python-protobuf \
-  && pip3 install protobuf3 xmlrunner pycrypto pyelliptic pyOpenSSL npyscreen \
- && rm -rf /var/lib/apt/lists/* # 20150504
+EXPOSE 10000
 
-RUN mkdir -p /home/toolchain && cd /home/toolchain \
-  && git clone https://github.com/llvm-mirror/llvm.git && cd llvm \
-    && git checkout release_36 \
-    && cd tools && git clone https://github.com/llvm-mirror/clang.git \
-      && cd clang && git checkout release_36 \
-  && cd projects \
-    && git clone https://github.com/llvm-mirror/compiler-rt.git && cd compiler-rt \
-      && git checkout release_36 && cd .. \ 
-    && git clone https://github.com/llvm-mirror/llvm.git && cd llvm \
-      && git checkout release_36 && cd .. \
-    && git clone https://github.com/llvm-mirror/libcxxabi.git && cd libcxxabi \
-      && git checkout release_36 && cd .. \
-      && cd ../.. \
-  && mkdir build && cd build \
-    && ccmake ../llvm
+RUN mkdir -p /home/frontg8 /opt/frontg8/data && cd /home/frontg8 \
+  && git clone https://source.arknet.ch/fmorgner/frontg8d.git \
+  && cd /home/frontg8/frontg8d/build && ./build
   
+VOLUME /opt/frontg8/data
+
+WORKDIR /home/frontg8/frontg8d/build/debug/bin
+ENTRYPOINT rm -rf /opt/frontg8/data || mkdir -p /opt/frontg8/data && echo $(dd if=/dev/urandom bs=1 count=42 | sha512sum | base64 --wrap 0) $(dd if=/dev/urandom bs=1 count=42 | sha512sum | base64 --wrap 0) | ./frontg8d 
